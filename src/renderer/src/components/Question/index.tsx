@@ -63,6 +63,7 @@ const Question: React.FC = () => {
       message.success(`${table} 数据清除成功！`)
     }
     setRefreshed(new Date().getTime())
+    setSelectedNames([])
   }
   // 通用导入处理
   const handleImport = async (
@@ -178,14 +179,17 @@ const Question: React.FC = () => {
     if (isChoosing) return
     setIsChoosing(true)
     setSelectedNames([])
-
-    intervalRef.current = window.setInterval(() => {
-      const randomNames = Array.from(
-        { length: numPeople },
-        () => students[Math.floor(Math.random() * students.length)]
-      )
-      setSelectedNames(randomNames.map((r) => r.name))
-    }, 100)
+    if (students.length > 0) {
+      intervalRef.current = window.setInterval(() => {
+        const randomNames = Array.from(
+          { length: numPeople },
+          () => students[Math.floor(Math.random() * students.length)]
+        )
+        setSelectedNames(randomNames.map((r) => r.name))
+      }, 100)
+    } else {
+      message.error('请先导入学生数据')
+    }
   }
 
   const stopChoosing = () => {
