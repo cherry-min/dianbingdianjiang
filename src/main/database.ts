@@ -1,20 +1,54 @@
 // database.ts
 import sqlite3 from 'sqlite3'
 import * as path from 'path'
-
+import { app } from 'electron'
 let db: sqlite3.Database
 
 export function initializeDatabase() {
-  const dbPath = path.join(__dirname, 'mydatabase.db')
+  // 区分开发环境和生产环境路径
+  const isDev = !app.isPackaged
+  const dbPath = isDev
+    ? path.join(__dirname, 'mydatabase.db') // 开发环境使用项目目录
+    : path.join(app.getPath('userData'), 'mydatabase.db') // 生产环境使用用户数据目录
+
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
-      console.error('Failed to connect to database:', err)
-    } else {
-      console.log('Connected to database.')
-      createTables()
+      console.error('❌ 数据库连接失败:', err.message)
+      showErrorDialog('数据库连接失败', `无法创建/打开数据库文件：\n${dbPath}`)
+      return
     }
+
+    console.log('✅ 成功连接到数据库:', dbPath)
+
+    // 启用外键约束（如果需要）
+    db.run('PRAGMA foreign_keys = ON;', (pragmaErr) => {
+      if (pragmaErr) {
+        console.error('❌ 外键约束启用失败:', pragmaErr.message)
+      }
+    })
+
+    // 创建表结构
+    createTables()
+  })
+
+  // 监听应用关闭事件
+  app.on('before-quit', () => {
+    db.close((closeErr) => {
+      if (closeErr) {
+        console.error('❌ 数据库关闭失败:', closeErr.message)
+        return
+      }
+      console.log('🗃️ 数据库连接已正常关闭')
+    })
   })
 }
+
+// 错误弹窗函数（示例）
+function showErrorDialog(title: string, content: string) {
+  const dialog = require('electron').dialog
+  dialog.showErrorBox(title, content)
+}
+
 //导出db
 export function getDb() {
   return db

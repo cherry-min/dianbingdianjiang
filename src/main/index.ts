@@ -2,7 +2,7 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { closeDatabase, getDb, initializeDatabase, query } from './database'
+import { getDb, initializeDatabase, query } from './database'
 
 function createWindow(): void {
   // Create the browser window.
@@ -40,6 +40,9 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  console.log('====================================')
+  console.log(app.getPath('userData'))
+  console.log('====================================')
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -100,10 +103,6 @@ app.whenReady().then(() => {
     // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
-})
-
-app.on('before-quit', () => {
-  closeDatabase()
 })
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
