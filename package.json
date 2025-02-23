@@ -5,6 +5,7 @@
   "main": "./out/main/index.js",
   "author": "https://github.com/cherry-min",
   "homepage": "https://electron-vite.org",
+  "license": "MIT",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
