@@ -150,7 +150,27 @@ const Question: React.FC = () => {
 
     setRefreshed(new Date().getTime())
   }
+  // 在组件中添加以下函数
+  const generateExcelTemplate = (dataType: 'questions' | 'students') => {
+    let data: any[] = []
+    let headers: string[] = []
 
+    if (dataType === 'questions') {
+      headers = ['问题', '答案']
+      data = [headers] // 只有表头，没有数据
+    } else if (dataType === 'students') {
+      headers = ['姓名', '性格']
+      data = [headers] // 只有表头，没有数据
+    }
+
+    // 创建工作表
+    const worksheet = XLSX.utils.aoa_to_sheet(data)
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
+
+    // 生成Excel文件并下载
+    XLSX.writeFile(workbook, `${dataType}_template.xlsx`)
+  }
   // // 导出JSON数据
   // const exportData = (dataType: 'questions' | 'students') => {
   //   const data = dataType === 'questions' ? questions : students
@@ -162,10 +182,24 @@ const Question: React.FC = () => {
   //   a.click()
   // }
 
-  // 主题切换
+  // 初始化主题
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme')
+    const isDark = savedTheme === 'dark'
+    setIsDarkTheme(isDark)
+    if (isDark) {
+      document.body.classList.add('dark-theme')
+    } else {
+      document.body.classList.remove('dark-theme')
+    }
+  }, [])
+
+  // 切换主题
   const toggleTheme = () => {
-    setIsDarkTheme(!isDarkTheme)
-    document.body.classList.toggle('dark-theme')
+    const newTheme = !isDarkTheme
+    setIsDarkTheme(newTheme)
+    document.body.classList.toggle('dark-theme', newTheme)
+    localStorage.setItem('theme', newTheme ? 'dark' : 'light')
   }
 
   // 问答系统逻辑
@@ -212,11 +246,11 @@ const Question: React.FC = () => {
 
   return (
     <>
-      <button className="button " onClick={() => window.location.reload()}>
+      <button className="button" onClick={() => window.location.reload()}>
         🔄 刷新页面
       </button>
       <button className="button theme-toggle" onClick={toggleTheme}>
-        🌓 切换主题
+        {isDarkTheme ? '🌞 切换浅色主题' : '🌙 切换深色主题'}
       </button>
       <div className="container">
         <div className="tab-container">
@@ -242,7 +276,12 @@ const Question: React.FC = () => {
                 {showAnswer && <div id="answer">{questions[currentQuestion].answer}</div>}
               </>
             ) : (
-              <div className="loading-placeholder">请先导入题目数据</div>
+              <div
+                className="loading-placeholder"
+                style={{ color: '#ff4d4f', marginBottom: '10px' }}
+              >
+                请先导入题目数据
+              </div>
             )}
             {/* 修改后的按钮容器 */}
             <div style={buttonContainerStyle}>
@@ -270,8 +309,11 @@ const Question: React.FC = () => {
               id="importQuestions"
               hidden
             />
+            <div className="button" onClick={() => generateExcelTemplate('questions')}>
+              下载模板
+            </div>
             <label htmlFor="importQuestions" className="button">
-              导入数据
+              导入题目数据
             </label>
             <div className="button" onClick={() => cleanData('questions')}>
               清除数据
@@ -281,23 +323,43 @@ const Question: React.FC = () => {
         {/* 随机选人系统 */}
         <div id="chooser" className={`tab-content ${activeTab === 'chooser' && 'active'}`}>
           <div className="card">
-            <h3 style={{ marginTop: 0 }}>随机选人系统</h3>
+            {/* 当学生数据为空时显示提示 */}
+            {students.length === 0 && (
+              <div style={{ color: '#ff4d4f', marginBottom: '10px' }}>请先导入学生数据</div>
+            )}
 
             <div className="chooser-controls">
+              <label
+                htmlFor="numPeople"
+                style={{
+                  marginRight: '10px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                选择人数:
+              </label>
               <input
                 type="number"
+                id="numPeople"
                 min="1"
                 value={numPeople}
                 onChange={(e) => setNumPeople(Math.min(Number(e.target.value), students.length))}
                 placeholder="选择人数"
+                disabled={students.length === 0} // 数据为空时禁用输入框
               />
-              <button className="button" onClick={startChoosing}>
+              <button
+                className="button"
+                onClick={startChoosing}
+                disabled={students.length === 0 || isChoosing} // 数据为空或正在选人时禁用
+              >
                 开始选人
               </button>
               <button
                 className="button"
                 onClick={stopChoosing}
                 style={{ backgroundColor: '#27ae60' }}
+                disabled={students.length === 0 || !isChoosing} // 数据为空或未在选人时禁用
               >
                 停止选人
               </button>
@@ -325,6 +387,9 @@ const Question: React.FC = () => {
                 id="importStudents"
                 hidden
               />
+              <div className="button" onClick={() => generateExcelTemplate('students')}>
+                下载模板
+              </div>
               <label htmlFor="importStudents" className="button">
                 导入学生数据
               </label>
