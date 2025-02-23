@@ -1,7 +1,7 @@
 // database.ts
 import sqlite3 from 'sqlite3'
 import * as path from 'path'
-import { app, netLog } from 'electron'
+import { app } from 'electron'
 let db: sqlite3.Database
 import fs from 'fs'
 
