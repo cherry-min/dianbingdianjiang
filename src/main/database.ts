@@ -1,18 +1,44 @@
 // database.ts
 import sqlite3 from 'sqlite3'
 import * as path from 'path'
-import { app } from 'electron'
+import { app, netLog } from 'electron'
 let db: sqlite3.Database
+import fs from 'fs'
 
 export function initializeDatabase() {
   // 区分开发环境和生产环境路径
   const isDev = !app.isPackaged
-  const dbPath = isDev
-    ? path.join(__dirname, 'mydatabase.db') // 开发环境使用项目目录
-    : path.join(app.getPath('userData'), 'mydatabase.db') // 生产环境使用用户数据目录
-  console.log('====================================')
-  console.log(app.getPath('userData'))
-  console.log('====================================')
+  const dbDir: string = path.join(isDev ? __dirname : app.getPath('userData'), 'teaching-tools')
+
+  // 如果目录不存在，则创建它
+  if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true })
+  }
+  const dbPath = path.join(dbDir, 'mydatabase.db')
+  // 日志文件路径
+  const logFilePath = path.join(dbDir, 'app.log')
+
+  // 重写 console.log
+  const originalLog = console.log
+  console.log = (...args: any[]) => {
+    const message = args
+      .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : arg))
+      .join(' ')
+    fs.appendFileSync(logFilePath, `${new Date().toISOString()} [LOG] ${message}\n`)
+    originalLog.apply(console, args)
+  }
+
+  // 重写 console.error
+  const originalError = console.error
+  console.error = (...args: any[]) => {
+    const message = args
+      .map((arg) => (typeof arg === 'object' ? JSON.stringify(arg) : arg))
+      .join(' ')
+    fs.appendFileSync(logFilePath, `${new Date().toISOString()} [ERROR] ${message}\n`)
+    originalError.apply(console, args)
+  }
+
+  // 连接数据库
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('❌ 数据库连接失败:', err.message)
