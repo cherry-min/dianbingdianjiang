@@ -10,7 +10,9 @@ export function initializeDatabase() {
   const dbPath = isDev
     ? path.join(__dirname, 'mydatabase.db') // 开发环境使用项目目录
     : path.join(app.getPath('userData'), 'mydatabase.db') // 生产环境使用用户数据目录
-
+  console.log('====================================')
+  console.log(app.getPath('userData'))
+  console.log('====================================')
   db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
       console.error('❌ 数据库连接失败:', err.message)
@@ -109,16 +111,4 @@ export function run(sql: string, params: any[] = []) {
       }
     })
   })
-}
-
-export function closeDatabase() {
-  if (db) {
-    db.close((err) => {
-      if (err) {
-        console.error('Failed to close database:', err)
-      } else {
-        console.log('Database connection closed.')
-      }
-    })
-  }
 }
