@@ -4,6 +4,13 @@
 
 ## 📦 功能特性
 
+### 应用截图
+
+![面板](./resources/doc/image/panel.png)
+
+![面板](./resources/doc/image/panel1.png)
+![面板](./resources/doc/image/panel2.png)
+
 ### 核心功能
 
 - **双模式切换**
